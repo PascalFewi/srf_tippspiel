@@ -65,7 +65,7 @@ export const UI = {
   },
 
   _renderRows(rows) {
-    const labels = ["Beste Wahl", "2. Wahl", "3. Wahl"];
+    const labels = ["Beste Wahl", "2. Wahl", "3. Wahl", "4. Wahl", "5. Wahl"];
     const tbody = this.el.rows;
     tbody.innerHTML = "";
 
@@ -99,7 +99,7 @@ export const UI = {
         });
       } else {
         const td = document.createElement("td");
-        td.colSpan = 3;
+        td.colSpan = 5;
         td.className = "nodata";
         td.textContent = r.reason || "keine Correct-Score-Quoten";
         tr.appendChild(td);
