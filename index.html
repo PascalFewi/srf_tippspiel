@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tippoptimierer — Erwartungswert pro Spiel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Erwartungswert statt Bauchgefühl</p>
+    <h1>Der Tipp mit dem höchsten Erwartungswert.</h1>
+    <p class="lede">Für jedes Spiel rechnen wir aus den Correct-Score-Quoten den Tipp, der <b>im Schnitt die meisten Punkte</b> bringt — nicht bloss das wahrscheinlichste Resultat. Das sind oft zwei verschiedene Dinge.</p>
+  </header>
+
+  <section class="slip" aria-label="Einstellungen">
+    <div class="steps">
+      <div class="field">
+        <label><span class="num">01</span> API-Key</label>
+        <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="odds-api.io Schlüssel">
+        <span class="hint privacy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <span>Bleibt in deinem Browser — wird <b>nirgends gespeichert</b> und nur an odds-api.io gesendet. Bitte nur <b>Free-Tier-Keys</b> eintragen. <a href="https://odds-api.io/" target="_blank" rel="noopener">Gratis-Key holen</a></span>
+        </span>
+      </div>
+
+      <div class="field">
+        <label><span class="num">02</span> Buchmacher</label>
+        <select id="book">
+          <option value="Bet365">Bet365</option>
+          <option value="Unibet">Unibet</option>
+          <option value="Betfair Exchange">Betfair Exchange</option>
+          <option value="Betsafe">Betsafe</option>
+          <option value="Polymarket">Polymarket</option>
+          <option value="Betfair Sportsbook">Betfair Sportsbook</option>
+        </select>
+        <span class="warn">Nur 1 Buchmacher pro Stunde abfragbar — wähl bewusst.</span>
+      </div>
+
+      <div class="field">
+        <label><span class="num">03</span> Punkteschema</label>
+        <select id="scheme">
+          <option value="srf">SRF Tippspiel (5 / 1 / 1 / 3)</option>
+          <option value="custom">Eigenes Schema …</option>
+        </select>
+        <span class="hint">Wettbewerb: <input id="league" value="international-fifa-world-cup" style="display:inline-block;width:auto;padding:4px 7px;font-size:12.5px;font-family:var(--font-mono)" aria-label="Liga-Slug"></span>
+      </div>
+
+      <div class="weights" id="weights">
+        <div class="field"><label for="wOut">Richtiger Ausgang</label><input id="wOut" type="number" min="0" step="1" value="5"></div>
+        <div class="field"><label for="wHome">Heim-Tore exakt</label><input id="wHome" type="number" min="0" step="1" value="1"></div>
+        <div class="field"><label for="wAway">Gast-Tore exakt</label><input id="wAway" type="number" min="0" step="1" value="1"></div>
+        <div class="field"><label for="wDiff">Tordifferenz</label><input id="wDiff" type="number" min="0" step="1" value="3"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="go" id="run">Beste Tipps berechnen</button>
+      <span class="status" id="status"></span>
+    </div>
+  </section>
+
+  <p class="disclaimer">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <span>Diese Seite ist nur eine <b>Oberfläche über die Gratis-API von <a href="https://odds-api.io/" target="_blank" rel="noopener">odds-api.io</a></b> — kein eigener Dienst, keine Server, keine Datenspeicherung und keine offizielle Verbindung zum Anbieter. Alle Quoten und die Verfügbarkeit kommen direkt von odds-api.io.</span>
+  </p>
+
+  <div class="msg empty show" id="emptyMsg">Trag deinen Free-Tier-Key ein, wähl einen Buchmacher und ein Punkteschema — dann holen wir das Spielprogramm und rechnen pro Partie die drei besten Tipps.</div>
+  <div class="msg err" id="errMsg"></div>
+
+  <section class="results" id="results" style="display:none">
+    <div class="results-head">
+      <h2 id="resultsTitle">Spielprogramm</h2>
+      <span class="meta" id="resultsMeta"></span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Datum / Anpfiff</th>
+            <th>Spiel</th>
+            <th class="rank">Beste Wahl</th>
+            <th class="rank">2. Wahl</th>
+            <th class="rank">3. Wahl</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="footnote" id="footnote"></p>
+  </section>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
