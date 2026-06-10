@@ -10,7 +10,8 @@ export const UI = {
   cache() {
     const ids = [
       "apiKey", "book", "scheme", "league", "weights", "wOut", "wHome", "wAway", "wDiff",
-      "run", "status", "emptyMsg", "errMsg", "results", "resultsTitle", "resultsMeta", "rows", "footnote", "csv",
+      "run", "status", "emptyMsg", "errMsg", "results", "resultsTitle", "resultsMeta", "rows", "footnote",
+      "csvTips", "csvOdds",
     ];
     ids.forEach((id) => (this.el[id] = document.getElementById(id)));
   },
@@ -111,20 +112,33 @@ export const UI = {
     }
   },
 
-  downloadCsv() {
-    const rows = this._lastRows;
-    if (!rows || !rows.length) return;
-
+  // CSV-Helfer: de-CH nutzt Komma als Dezimaltrenner, darum Semikolon als
+  // Spaltentrenner und UTF-8-BOM, damit Excel Umlaute richtig liest.
+  _saveCsv(rows, filename) {
     const sep = ";";
     const cell = (v) => {
       const s = String(v ?? "");
       return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
+    const text = rows.map((r) => r.map(cell).join(sep)).join("\r\n");
+    const blob = new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  // Eine Zeile pro Spiel mit den fünf besten Tipps und ihren Erwartungswerten.
+  downloadTips() {
+    const rows = this._lastRows;
+    if (!rows || !rows.length) return;
 
     const header = ["Datum", "Anpfiff", "Heim", "Gast", "Buchmacher"];
     for (let i = 1; i <= 5; i++) header.push(`${i}. Wahl`, `EV ${i}`);
 
-    const lines = [header.map(cell).join(sep)];
+    const out = [header];
     for (const r of rows) {
       const c = [
         r.date ? formatDate(r.date) : "",
@@ -138,15 +152,36 @@ export const UI = {
         c.push(t ? `${t.H}:${t.A}` : "", t ? formatEv(t.ev) : "");
       }
       if (!r.tips) c[5] = r.reason || "keine Correct-Score-Quoten";
-      lines.push(c.map(cell).join(sep));
+      out.push(c);
     }
+    this._saveCsv(out, "tippoptimierer-tipps.csv");
+  },
 
-    const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "tippoptimierer.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+  // Lange Form: eine Zeile pro Resultat mit der rohen Buchmacher-Quote.
+  downloadOdds() {
+    const rows = this._lastRows;
+    if (!rows || !rows.length) return;
+
+    const out = [["Datum", "Anpfiff", "Heim", "Gast", "Buchmacher", "Resultat", "Quote"]];
+    for (const r of rows) {
+      const base = [
+        r.date ? formatDate(r.date) : "",
+        r.date ? formatTime(r.date) : "",
+        r.home,
+        r.away,
+        r.book ?? this._lastBook ?? "",
+      ];
+      if (r.scores && Object.keys(r.scores).length) {
+        Object.entries(r.scores)
+          .sort((a, b) => a[1] - b[1])  // nach Quote aufsteigend (wahrscheinlichstes zuerst)
+          .forEach(([k, odd]) => {
+            const [h, a] = k.split(",");
+            out.push([...base, `${h}:${a}`, String(odd).replace(".", ",")]);
+          });
+      } else {
+        out.push([...base, r.reason || "keine Correct-Score-Quoten", ""]);
+      }
+    }
+    this._saveCsv(out, "tippoptimierer-quoten.csv");
   },
 };

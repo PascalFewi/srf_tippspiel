@@ -48,7 +48,7 @@ function toRow(ev, oddsById, book, weights) {
   if (!parsed) return { home, away, date, tips: null, reason: "keine Correct-Score-Quoten" };
 
   const { dist } = deVig(parsed.scores);
-  return { home, away, date, book: parsed.book, tips: bestTips(dist, weights, 5) };
+  return { home, away, date, book: parsed.book, scores: parsed.scores, tips: bestTips(dist, weights, 5) };
 }
 
 async function run() {
@@ -95,7 +95,8 @@ function init() {
   UI.cache();
   UI.el.scheme.addEventListener("change", (e) => UI.toggleWeights(e.target.value === "custom"));
   UI.el.run.addEventListener("click", run);
-  UI.el.csv.addEventListener("click", () => UI.downloadCsv());
+  UI.el.csvTips.addEventListener("click", () => UI.downloadTips());
+  UI.el.csvOdds.addEventListener("click", () => UI.downloadOdds());
   UI.el.apiKey.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
 }
 
