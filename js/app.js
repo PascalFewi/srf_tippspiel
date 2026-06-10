@@ -95,6 +95,7 @@ function init() {
   UI.cache();
   UI.el.scheme.addEventListener("change", (e) => UI.toggleWeights(e.target.value === "custom"));
   UI.el.run.addEventListener("click", run);
+  UI.el.csv.addEventListener("click", () => UI.downloadCsv());
   UI.el.apiKey.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
 }
 

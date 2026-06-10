@@ -10,7 +10,7 @@ export const UI = {
   cache() {
     const ids = [
       "apiKey", "book", "scheme", "league", "weights", "wOut", "wHome", "wAway", "wDiff",
-      "run", "status", "emptyMsg", "errMsg", "results", "resultsTitle", "resultsMeta", "rows", "footnote",
+      "run", "status", "emptyMsg", "errMsg", "results", "resultsTitle", "resultsMeta", "rows", "footnote", "csv",
     ];
     ids.forEach((id) => (this.el[id] = document.getElementById(id)));
   },
@@ -52,6 +52,8 @@ export const UI = {
   hideEmpty() { this.el.emptyMsg.classList.remove("show"); },
 
   renderResults(rows, weights, requests, book) {
+    this._lastRows = rows;
+    this._lastBook = book;
     this._renderRows(rows);
     const withTips = rows.filter((r) => r.tips).length;
     this.el.resultsTitle.textContent = `${rows.length} Spiele`;
@@ -107,5 +109,44 @@ export const UI = {
 
       tbody.appendChild(tr);
     }
+  },
+
+  downloadCsv() {
+    const rows = this._lastRows;
+    if (!rows || !rows.length) return;
+
+    const sep = ";";
+    const cell = (v) => {
+      const s = String(v ?? "");
+      return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+
+    const header = ["Datum", "Anpfiff", "Heim", "Gast", "Buchmacher"];
+    for (let i = 1; i <= 5; i++) header.push(`${i}. Wahl`, `EV ${i}`);
+
+    const lines = [header.map(cell).join(sep)];
+    for (const r of rows) {
+      const c = [
+        r.date ? formatDate(r.date) : "",
+        r.date ? formatTime(r.date) : "",
+        r.home,
+        r.away,
+        r.book ?? this._lastBook ?? "",
+      ];
+      for (let i = 0; i < 5; i++) {
+        const t = r.tips && r.tips[i];
+        c.push(t ? `${t.H}:${t.A}` : "", t ? formatEv(t.ev) : "");
+      }
+      if (!r.tips) c[5] = r.reason || "keine Correct-Score-Quoten";
+      lines.push(c.map(cell).join(sep));
+    }
+
+    const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tippoptimierer.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   },
 };
