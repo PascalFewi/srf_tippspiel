@@ -6,7 +6,7 @@
 //   API_BASE: "https://dein-worker.deinsubdomain.workers.dev/v3"
 
 export const CONFIG = {
-  API_BASE: "https://api.odds-api.io/v3",
+  API_BASE: "https://oddsproxy.komqom.workers.dev/v3",
   MAX_GOALS: 7,            // Tipp-Gitter 0..7 je Seite
   BATCH: 10,               // /odds/multi: bis 10 Events pro Request
   BATCH_DELAY_MS: 250,     // sanfte Pause zwischen Batches
