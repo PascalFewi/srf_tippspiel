@@ -41,12 +41,6 @@ python3 -m http.server 8000
 # dann http://localhost:8000 öffnen
 ```
 
-## Deployen
-
-Statischer Host genügt — kein Build-Schritt. Den Ordner-Inhalt hochladen, z. B.:
-
-- **Cloudflare Pages / Netlify / Vercel:** Ordner droppen oder Repo verbinden.
-- **GitHub Pages:** Dateien ins Repo, Pages auf den Branch zeigen lassen.
 
 ## CORS
 
