@@ -48,7 +48,7 @@ function toRow(ev, oddsById, book, weights) {
   if (!parsed) return { home, away, date, tips: null, reason: "keine Correct-Score-Quoten" };
 
   const { dist } = deVig(parsed.scores);
-  return { home, away, date, book: parsed.book, scores: parsed.scores, tips: bestTips(dist, weights, 5) };
+  return { home, away, date, book: parsed.book, scores: parsed.scores, dist, tips: bestTips(dist, weights, 5) };
 }
 
 async function run() {
