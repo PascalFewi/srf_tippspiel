@@ -180,24 +180,22 @@ export const UI = {
     const tips = bestTips(dist, w, 10);
     const bestKey = tips.length ? tips[0].H + "," + tips[0].A : null;
 
-    // Erwartete Tore (Σ h·p / Σ a·p) und das integer-gerundete Resultat fürs
-    // blaue Markierungsviereck — im Controller gerechnet, hier nur dargestellt.
+    // Erwartete Tore (Σ h·p / Σ a·p) — im Controller gerechnet, hier nur dargestellt.
     const eg = r.eg || expectedGoals(dist);
-    const egH = Math.round(eg.home), egA = Math.round(eg.away);
-    const egKey = egH + "," + egA;
     const pct = (p) => {
       const v = p * 100;
       if (v < 0.05) return "";
       return (v >= 9.95 ? Math.round(v) : v.toFixed(1)) + "%";
     };
 
-    // Heatmap: Sättigung relativ zur wahrscheinlichsten Zelle.
-    const cellStyle = (p) => {
-      if (!p) return "";
-      const a = maxP ? p / maxP : 0;
+    // Grüner Heatmap-Hintergrund nach relativer Stärke a ∈ [0,1] — identisch in
+    // Matrix und Tordifferenz-Streifen.
+    const greenBg = (a) => {
+      if (!(a > 0)) return "";
       const fg = a > 0.55 ? "color:#fff;" : "";
       return `style="background:rgba(22,121,74,${(a * 0.9).toFixed(3)});${fg}"`;
     };
+    const cellStyle = (p) => greenBg(maxP ? p / maxP : 0);
 
     // Matrix-Tabelle: Zeilen = Heim-Tore, Spalten = Gast-Tore, plus Σ-Marginalien.
     let head = `<th class="m-corner"><span>${esc(r.home)}</span><i>↓</i><i>→</i><span>${esc(r.away)}</span></th>`;
@@ -212,7 +210,7 @@ export const UI = {
         const p = P[h + "," + a] || 0;
         rowSum += p;
         const key = h + "," + a;
-        const mark = (key === bestKey ? " m-best" : "") + (key === egKey ? " m-xg" : "");
+        const mark = key === bestKey ? " m-best" : "";
         const title = pct(p) ? ` title="${esc(r.home)} ${h}:${a} ${esc(r.away)} — ${pct(p)}"` : "";
         cells += `<td class="m-cell${mark}" ${cellStyle(p)}${title}>${pct(p)}</td>`;
       }
@@ -227,12 +225,35 @@ export const UI = {
     }
     foot += `<td class="m-sum"></td>`;
 
+    // Tordifferenz-Verteilung: Summe je Diagonale (d = Heim − Gast). Randspalten
+    // mit verschwindender Wahrscheinlichkeit werden abgeschnitten.
+    const diffP = {};
+    for (let h = 0; h <= maxH; h++) {
+      for (let a = 0; a <= maxA; a++) {
+        const p = P[h + "," + a] || 0;
+        if (p) diffP[h - a] = (diffP[h - a] || 0) + p;
+      }
+    }
+    let dLo = -maxA, dHi = maxH;
+    while (dLo < dHi && (diffP[dLo] || 0) * 100 < 0.05) dLo++;
+    while (dHi > dLo && (diffP[dHi] || 0) * 100 < 0.05) dHi--;
+    let maxDiffP = 0;
+    for (let d = dLo; d <= dHi; d++) maxDiffP = Math.max(maxDiffP, diffP[d] || 0);
+
+    let diffHead = "", diffBody = "";
+    for (let d = dLo; d <= dHi; d++) {
+      const p = diffP[d] || 0;
+      const lbl = d > 0 ? "+" + d : String(d);
+      const title = pct(p) ? ` title="Tordifferenz ${lbl}: ${pct(p)}"` : "";
+      diffHead += `<th>${lbl}</th>`;
+      diffBody += `<td class="m-cell" ${greenBg(maxDiffP ? p / maxDiffP : 0)}${title}>${pct(p)}</td>`;
+    }
+
     const evTop = tips[0] ? tips[0].ev : 1;
     const evList = tips.map((t, i) => {
       const bw = Math.max(6, Math.round((t.ev / evTop) * 100));
       const isBest = i === 0 ? " ev-best" : "";
-      const isXg = (t.H + "," + t.A) === egKey ? " ev-xg" : "";
-      return `<li class="${(isBest + isXg).trim()}">` +
+      return `<li class="${isBest.trim()}">` +
         `<span class="ev-rank">${i + 1}</span>` +
         `<span class="ev-score">${t.H}:${t.A}</span>` +
         `<span class="ev-bar"><i style="width:${bw}%"></i></span>` +
@@ -263,7 +284,14 @@ export const UI = {
             `<tbody>${bodyRows}</tbody>` +
             `<tfoot><tr>${foot}</tr></tfoot>` +
           `</table></div>` +
-          `<div class="m-legend"><span class="m-best-key"></span> bester Erwartungswert · <span class="m-xg-key"></span> erwartete Tore (gerundet) · dunkler = wahrscheinlicher</div>` +
+          `<div class="m-legend"><span class="m-best-key"></span> bester Erwartungswert · dunkler = wahrscheinlicher</div>` +
+          `<div class="m-diff">` +
+            `<div class="m-cap">Tordifferenz (${esc(r.home)} − ${esc(r.away)}) — Summe je Diagonale</div>` +
+            `<div class="m-gridwrap"><table class="m-grid m-diffgrid">` +
+              `<thead><tr>${diffHead}</tr></thead>` +
+              `<tbody><tr>${diffBody}</tr></tbody>` +
+            `</table></div>` +
+          `</div>` +
         `</div>` +
         `<div class="m-evbox">` +
           `<h4>Top 10 Erwartungswerte</h4>` +
