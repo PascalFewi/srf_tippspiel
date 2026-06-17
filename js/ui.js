@@ -3,7 +3,7 @@
 
 import { CONFIG } from "./config.js";
 import { formatDate, formatTime, formatEv } from "./format.js";
-import { bestTips } from "./optimizer.js";
+import { bestTips, expectedGoals } from "./optimizer.js";
 
 export const UI = {
   el: {},
@@ -179,6 +179,12 @@ export const UI = {
 
     const tips = bestTips(dist, w, 10);
     const bestKey = tips.length ? tips[0].H + "," + tips[0].A : null;
+
+    // Erwartete Tore (Σ h·p / Σ a·p) und das integer-gerundete Resultat fürs
+    // blaue Markierungsviereck — im Controller gerechnet, hier nur dargestellt.
+    const eg = r.eg || expectedGoals(dist);
+    const egH = Math.round(eg.home), egA = Math.round(eg.away);
+    const egKey = egH + "," + egA;
     const pct = (p) => {
       const v = p * 100;
       if (v < 0.05) return "";
@@ -206,7 +212,7 @@ export const UI = {
         const p = P[h + "," + a] || 0;
         rowSum += p;
         const key = h + "," + a;
-        const mark = key === bestKey ? " m-best" : "";
+        const mark = (key === bestKey ? " m-best" : "") + (key === egKey ? " m-xg" : "");
         const title = pct(p) ? ` title="${esc(r.home)} ${h}:${a} ${esc(r.away)} — ${pct(p)}"` : "";
         cells += `<td class="m-cell${mark}" ${cellStyle(p)}${title}>${pct(p)}</td>`;
       }
@@ -225,7 +231,8 @@ export const UI = {
     const evList = tips.map((t, i) => {
       const bw = Math.max(6, Math.round((t.ev / evTop) * 100));
       const isBest = i === 0 ? " ev-best" : "";
-      return `<li class="${isBest.trim()}">` +
+      const isXg = (t.H + "," + t.A) === egKey ? " ev-xg" : "";
+      return `<li class="${(isBest + isXg).trim()}">` +
         `<span class="ev-rank">${i + 1}</span>` +
         `<span class="ev-score">${t.H}:${t.A}</span>` +
         `<span class="ev-bar"><i style="width:${bw}%"></i></span>` +
@@ -246,6 +253,7 @@ export const UI = {
         `<span class="m-chip"><b>X</b> ${pct(pDraw)}</span>` +
         `<span class="m-chip"><b>2</b> ${pct(pAway)}</span>` +
         `<span class="m-chip ghost">Wahrscheinlichstes Resultat <b>${likely}</b> (${pct(topP)})</span>` +
+        `<span class="m-chip xg">Erwartete Tore <b>⌀ ${eg.home.toFixed(1)} : ${eg.away.toFixed(1)}</b></span>` +
       `</div>` +
       `<div class="m-body">` +
         `<div class="m-matrix">` +
@@ -255,7 +263,7 @@ export const UI = {
             `<tbody>${bodyRows}</tbody>` +
             `<tfoot><tr>${foot}</tr></tfoot>` +
           `</table></div>` +
-          `<div class="m-legend"><span class="m-best-key"></span> bester Erwartungswert · dunkler = wahrscheinlicher</div>` +
+          `<div class="m-legend"><span class="m-best-key"></span> bester Erwartungswert · <span class="m-xg-key"></span> erwartete Tore (gerundet) · dunkler = wahrscheinlicher</div>` +
         `</div>` +
         `<div class="m-evbox">` +
           `<h4>Top 10 Erwartungswerte</h4>` +

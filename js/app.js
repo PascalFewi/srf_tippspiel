@@ -3,7 +3,7 @@
 
 import { CONFIG } from "./config.js";
 import { deVig } from "./probability.js";
-import { bestTips } from "./optimizer.js";
+import { bestTips, expectedGoals } from "./optimizer.js";
 import { parseCorrectScore } from "./parser.js";
 import { fetchEvents, fetchOddsMulti } from "./api.js";
 import { UI } from "./ui.js";
@@ -48,7 +48,7 @@ function toRow(ev, oddsById, book, weights) {
   if (!parsed) return { home, away, date, tips: null, reason: "keine Correct-Score-Quoten" };
 
   const { dist } = deVig(parsed.scores);
-  return { home, away, date, book: parsed.book, scores: parsed.scores, dist, tips: bestTips(dist, weights, 5) };
+  return { home, away, date, book: parsed.book, scores: parsed.scores, dist, eg: expectedGoals(dist), tips: bestTips(dist, weights, 5) };
 }
 
 async function run() {

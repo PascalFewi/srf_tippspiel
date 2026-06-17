@@ -18,6 +18,17 @@ export function expectedValue(H, A, dist, w) {
   return ev;
 }
 
+// Erwartete Tore je Seite: Σ h·p bzw. Σ a·p über die gesamte entvigte Verteilung.
+export function expectedGoals(dist) {
+  let home = 0, away = 0;
+  for (const [k, p] of Object.entries(dist)) {
+    const c = k.indexOf(",");
+    home += +k.slice(0, c) * p;
+    away += +k.slice(c + 1) * p;
+  }
+  return { home, away };
+}
+
 export function bestTips(dist, w, topN = 3) {
   const out = [];
   for (let H = 0; H <= CONFIG.MAX_GOALS; H++) {
