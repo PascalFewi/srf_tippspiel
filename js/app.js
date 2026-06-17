@@ -6,6 +6,7 @@ import { deVig } from "./probability.js";
 import { bestTips, expectedGoals } from "./optimizer.js";
 import { parseCorrectScore } from "./parser.js";
 import { fetchEvents, fetchOddsMulti } from "./api.js";
+import { isDemo, loadDemoRows } from "./demo.js";
 import { UI } from "./ui.js";
 
 const ERR = {
@@ -51,9 +52,34 @@ function toRow(ev, oddsById, book, weights) {
   return { home, away, date, book: parsed.book, scores: parsed.scores, dist, eg: expectedGoals(dist), tips: bestTips(dist, weights, 5) };
 }
 
+// Demo-Modus (?demo): Spiele aus odds.csv statt aus der API, ohne API-Key.
+async function runDemo() {
+  UI.el.run.disabled = true;
+  try {
+    UI.status("Demo-Modus … lese odds.csv");
+    const { weights } = UI.readInputs();
+    const rows = await loadDemoRows(weights);
+    if (!rows.length) {
+      UI.showEmpty("Die Demo-Datei enthält keine Spiele.");
+      UI.status("");
+      return;
+    }
+    UI.renderResults(rows, weights, 0, "Demo · odds.csv");
+    UI.status(`Demo · ${rows.length} Spiele aus odds.csv (kein API-Key nötig).`);
+  } catch (e) {
+    UI.el.results.style.display = "none";
+    UI.showError("Demo-Daten konnten nicht geladen werden: <b>" + (e.message || "unbekannt") +
+      "</b>. Läuft die Seite über einen lokalen Server (nicht via <code>file://</code>)?");
+    UI.status("");
+  } finally {
+    UI.el.run.disabled = false;
+  }
+}
+
 async function run() {
   UI.clearError();
   UI.hideEmpty();
+  if (isDemo()) return runDemo();
 
   const { key, book, league, weights } = UI.readInputs();
   if (!key) {
@@ -98,6 +124,7 @@ function init() {
   UI.el.csvTips.addEventListener("click", () => UI.downloadTips());
   UI.el.csvOdds.addEventListener("click", () => UI.downloadOdds());
   UI.el.apiKey.addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+  if (isDemo()) run();   // im Demo-Modus direkt loslegen
 }
 
 init();
