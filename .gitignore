@@ -1,4 +1,2 @@
 *.env
 
-# Lokale Demo-Daten (nur für ?demo, nicht deployen)
-odds.csv
